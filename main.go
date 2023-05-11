@@ -9,15 +9,16 @@ import (
 	gecko "github.com/superoo7/go-gecko/v3"
 	"github.com/superoo7/go-gecko/v3/types"
 )
+
 const (
 	COIN = "chainlink"
 )
 
 type CryptoData struct {
-	Time       string  `json:"time"`
-	Price      float64 `json:"price"`
-	Volume     float64 `json:"volume"`
-	MarketCap  float64 `json:"market_cap"`
+	Time      string  `json:"time"`
+	Price     float64 `json:"price"`
+	Volume    float64 `json:"volume"`
+	MarketCap float64 `json:"market_cap"`
 }
 type RegressionModel struct {
 	Model *regression.Regression
@@ -45,7 +46,7 @@ func main() {
 	fmt.Printf("Model evaluation results (MSE): %v\n", mse)
 
 	// Initiate the real-time price prediction analysis loop
-	realTimePredictionsLoop(model, time.Second * 5)
+	realTimePredictionsLoop(model, time.Minute * 1440)
 }
 
 func convertToCryptoData(prices, marketCaps, totalVolumes []types.ChartItem) []CryptoData {
@@ -59,42 +60,42 @@ func convertToCryptoData(prices, marketCaps, totalVolumes []types.ChartItem) []C
 			MarketCap: float64(marketCaps[i][1]),
 		}
 	}
-	
+
 	return cryptoData
 }
 
 func loadHistoricalData() (trainingCryptoData []CryptoData, testingCryptoData []CryptoData) {
-    // coin := "gas" // Example: use bitcoin
-    currency := "usd" // Example: use USD for price info
-    // days := 365       // Example: fetch data from last can365 days
-    cg := gecko.NewClient(nil)
+	// coin := "gas" // Example: use bitcoin
+	currency := "usd" // Example: use USD for price info
+	// days := 365       // Example: fetch data from last can365 days
+	cg := gecko.NewClient(nil)
 
-    // Fetch historical price, volume, and market cap data in USD
-    historicalData, err := cg.CoinsIDMarketChart(COIN, currency, "max")
-    if err != nil {
-        fmt.Println("Error retrieving historical data:", err)
-        return
-    }
+	// Fetch historical price, volume, and market cap data in USD
+	historicalData, err := cg.CoinsIDMarketChart(COIN, currency, "max")
+	if err != nil {
+		fmt.Println("Error retrieving historical data:", err)
+		return
+	}
 
-    // Divide dataset into training (80%) and testing (20%) sets
-    prices := *historicalData.Prices
-    marketCaps := *historicalData.MarketCaps
-    totalVolumes := *historicalData.TotalVolumes
+	// Divide dataset into training (80%) and testing (20%) sets
+	prices := *historicalData.Prices
+	marketCaps := *historicalData.MarketCaps
+	totalVolumes := *historicalData.TotalVolumes
 
-    splitIndex := int(float64(len(prices)) * 0.8)
+	splitIndex := int(float64(len(prices)) * 0.8)
 
-    trainingPrices := prices[:splitIndex]
-    testingPrices := prices[splitIndex:]
+	trainingPrices := prices[:splitIndex]
+	testingPrices := prices[splitIndex:]
 
-    trainingMarketCaps := marketCaps[:splitIndex]
-    testingMarketCaps := marketCaps[splitIndex:]
+	trainingMarketCaps := marketCaps[:splitIndex]
+	testingMarketCaps := marketCaps[splitIndex:]
 
-    trainingTotalVolumes := totalVolumes[:splitIndex]
-    testingTotalVolumes := totalVolumes[splitIndex:]
+	trainingTotalVolumes := totalVolumes[:splitIndex]
+	testingTotalVolumes := totalVolumes[splitIndex:]
 
-    trainingCryptoData = convertToCryptoData(trainingPrices, trainingMarketCaps, trainingTotalVolumes)
-    testingCryptoData = convertToCryptoData(testingPrices, testingMarketCaps, testingTotalVolumes)
-    return
+	trainingCryptoData = convertToCryptoData(trainingPrices, trainingMarketCaps, trainingTotalVolumes)
+	testingCryptoData = convertToCryptoData(testingPrices, testingMarketCaps, testingTotalVolumes)
+	return
 }
 
 func preprocessData(trainingCryptoData []CryptoData, testingCryptoData []CryptoData) (preprocessedTrainingData []PreprocessedData, preprocessedTestingData []PreprocessedData) {
@@ -103,7 +104,7 @@ func preprocessData(trainingCryptoData []CryptoData, testingCryptoData []CryptoD
 	minPrice, maxPrice := findMinMax(combinedData, "Price")
 	minVolume, maxVolume := findMinMax(combinedData, "Volume")
 	minMarketCap, maxMarketCap := findMinMax(combinedData, "MarketCap")
-	
+
 	preprocessedTrainingData = make([]PreprocessedData, len(trainingCryptoData))
 	preprocessedTestingData = make([]PreprocessedData, len(testingCryptoData))
 
@@ -223,7 +224,7 @@ func realTimePredictionsLoop(regModel *RegressionModel, interval time.Duration) 
 }
 
 func fetchLatestData(cg *gecko.Client, coin, currency string) (latestCryptoData CryptoData, err error) {
-    historicalData, err := cg.CoinsIDMarketChart(coin, currency, "1")
+	historicalData, err := cg.CoinsIDMarketChart(coin, currency, "1")
 	if err != nil {
 		return
 	}
@@ -231,10 +232,9 @@ func fetchLatestData(cg *gecko.Client, coin, currency string) (latestCryptoData 
 	prices := *historicalData.Prices
 	marketCaps := *historicalData.MarketCaps
 	totalVolumes := *historicalData.TotalVolumes
-	latestPrice := prices[len(prices) - 1]
-	latestMarketCap :=  marketCaps[len(marketCaps) -1]
-	latestTotalVolume :=  totalVolumes[len(totalVolumes) -1]
-
+	latestPrice := prices[len(prices)-1]
+	latestMarketCap := marketCaps[len(marketCaps)-1]
+	latestTotalVolume := totalVolumes[len(totalVolumes)-1]
 
 	latestCryptoData = CryptoData{
 		Time:      time.Unix(int64(latestPrice[0]/1000), 0).Format(time.RFC3339),
@@ -242,5 +242,5 @@ func fetchLatestData(cg *gecko.Client, coin, currency string) (latestCryptoData 
 		Volume:    float64(latestTotalVolume[1]),
 		MarketCap: float64(latestMarketCap[1]),
 	}
-	return 
+	return
 }
